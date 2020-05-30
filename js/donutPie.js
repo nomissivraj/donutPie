@@ -4,9 +4,22 @@ var completeColor = "#52B7A9",
     underwayColor = "#EC8755",
     notStartedColor = "#BC5858";
 var donutData = [
-    { name: 'Complete', stringId: 'complete', count: 9, fill: completeColor },
-    { name: 'Underway', stringId: 'underway', count: 4, fill: underwayColor },
-    { name: 'Not Started', stringId: 'not-started', count: 5, fill: notStartedColor }
+    {
+        chart: "chart-id-1",
+        data: [
+            { name: 'Complete', stringId: 'complete', count: 9, fill: completeColor },
+            { name: 'Underway', stringId: 'underway', count: 4, fill: underwayColor },
+            { name: 'Not Started', stringId: 'not-started', count: 5, fill: notStartedColor }
+        ]
+    },
+    {
+        chart: "chart-id-2",
+        data: [
+            { name: 'Complete', stringId: 'complete', count: 2, fill: completeColor },
+            { name: 'Underway', stringId: 'underway', count: 12, fill: underwayColor },
+            { name: 'Not Started', stringId: 'not-started', count: 7, fill: notStartedColor }
+        ]
+    }
 ];
 
 
@@ -26,9 +39,14 @@ var donutData = [
             paddingX = Math.ceil(parseInt(paddingL)) + Math.ceil(parseInt(paddingR));
 
             var elWidth = _this.offsetWidth - (paddingX + 2);
-
+            //Get current chart from JSON array
+            var currentChart;
+            for (var i = 0; i < data.length; i++) {
+                if (_this.getAttribute("data-chart-id") == data[i].chart)
+                    currentChart = data[i].data
+            }
             var props = {
-                id: _this.getAttribute('id'),
+                id: _this.getAttribute("data-chart-id"),
                 svgWidth: elWidth,
                 svgHeight: elWidth,
                 stroke: 10,
@@ -36,7 +54,7 @@ var donutData = [
                     x: elWidth / 2,
                     y: elWidth / 2
                 },
-                segments: data,
+                segments: currentChart,
                 style: {
                     backgroundColor: !opts || !opts.backgroundColor ? "#cccccc" : opts.backgroundColor,
                 },
@@ -48,9 +66,10 @@ var donutData = [
     }
 
     self.draw = function (props) {
+        console.log(document.querySelectorAll('[data-chart-id='+props.id+']'),props.id)
         // Ensure only one svg per element (stops duplication on redraw)
-        document.querySelector('#' + props.id + ' svg') ? d3.select('#' + props.id + ' svg').remove() : null;
-        d3.select('#' + props.id).append('svg').attr('id', props.id + '-svg').attr('width', props.svgWidth).attr('height', props.svgHeight);
+        document.querySelector('[data-chart-id='+props.id+'] svg') ? d3.select('[data-chart-id='+props.id+'] svg').remove() : null;
+        d3.select('[data-chart-id='+props.id+']').append('svg').attr('id', props.id + '-svg').attr('width', props.svgWidth).attr('height', props.svgHeight);
         var canvas = d3.select('#' + props.id + '-svg');
         drawBase();
         drawSegments();
@@ -85,17 +104,16 @@ var donutData = [
             props.segments.forEach(function (_this) {
                 total += _this.count;
             });
-
             var lastEndPos = 0;
             // append mask layer
             //canvas.append('mask').attr('id', 'mask-'+props.Id);
-            canvas.append('g').attr('id', 'mask-'+props.Id);
+            canvas.append('g').attr('id', 'mask-' + props.id);
 
             // Draw strokes
             props.segments.forEach(function (_this) {
                 var curPerc = (_this.count / total) * 100;
                 // append black arc to mask. //TODO CHANGE THIS TO LINE at correct ANGLE
-                drawArc(lastEndPos - .5, lastEndPos + .5, 'white', _this.stringId, d3.select("#mask-"+props.Id));
+                drawArc(lastEndPos - .5, lastEndPos + .5, 'white', _this.stringId, d3.select("#mask-" + props.id));
                 lastEndPos += curPerc;
             });
         }
@@ -105,7 +123,7 @@ var donutData = [
             // Arc properties
             var arc = d3.svg.arc()
                 .outerRadius(props.svgWidth / 2 - inset)
-                .innerRadius(props.svgWidth / 2 - (props.svgWidth / 5 - inset))
+                .innerRadius(props.svgWidth / 2 - (props.svgWidth / 4.5 - inset))
                 .startAngle(sAngle / 100 * Math.PI * 2)
                 .endAngle(eAngle / 100 * Math.PI * 2);
 
